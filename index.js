@@ -18,10 +18,11 @@ const corsOptions = {
   optionsSuccessStatus: 200
 }
 
-app.use(cors(corsOptions))
+// app.use(cors(corsOptions))
+app.use(cors())
 app.use(express.json())
 
-app.get('/countries', (req, res) => {
+app.get('/api/v1/countries', (req, res) => {
   const headers = new Headers()
   headers.append("X-CSCAPI-KEY", "Sjk4Q2N4dlBrNG1vclVtY01HRFZtelhvdGdXQ2xzVVFqT3g1NTFFVg==")
   const reqOptions = {
@@ -36,31 +37,31 @@ app.get('/countries', (req, res) => {
     .catch(err => response(400, "", err, res))
 })
 
-app.get('/', (req, res) => {
+app.get('/api/v1/', (req, res) => {
   res.send("404 | Page not found")
 })
 
 // TODO: sempat mau coba autheticate token, tapi belum kelar itu yak, nanti mungkin pas maintenance aja tambahin atau kalo sempet sebelum launch
-app.get('/categories', (req, res) => {
+app.get('/api/v1/categories', (req, res) => {
   const path = req.path.split("/")[1]
   const data = getAllData(path)
   response(200, data, "Successfully retrieved category data", res)
 })
 
 // TODO: berhubung data yg diambil belum dari db, mungkin nanti bisa dikondisikan ya, yg benar" popular dan data terbaru (untuk new arrivals)
-app.get('/popular-categories', (req, res) => {
+app.get('/api/v1/popular-categories', (req, res) => {
   const path = req.path.split("/")[1]
   const data = getAllData(path)
   response(200, data, "Successfully retrieved popular category data", res)
 })
 
-app.get('/testimonials', (req, res) => {
+app.get('/api/v1/testimonials', (req, res) => {
   const path = req.path.split("/")[1]
   const data = getAllData(path)
   response(200, data, "Successfully retrieved testimonial data", res)
 })
 
-app.get('/category/:slug', (req, res) => {
+app.get('/api/v1/category/:slug', (req, res) => {
   const path = req.path.split("/")[1]
   const data = getAllData(path, req.params.slug)
   response(200, data, `Successfully retrieved ${req.params.slug} category data`, res)
@@ -80,7 +81,7 @@ const loginValidator = [
   body('data.password').trim().notEmpty()
 ]
 
-app.post('/registration', registerValidator, (req, res) => {
+app.post('/api/v1/registration', registerValidator, (req, res) => {
   const errors = validationResult(req)
   if (errors.errors.length > 0) {
     return response(400, "", "Invalid data format", res)
@@ -121,7 +122,7 @@ app.post('/registration', registerValidator, (req, res) => {
   })
 })
 
-app.post('/login', loginValidator, (req, res) => {
+app.post('/api/v1/login', loginValidator, (req, res) => {
   const errors = validationResult(req)
   if (errors.errors.length > 0) {
     return response(400, "", "Invalid data format", res)
