@@ -1,7 +1,7 @@
 const express = require('express')
 const cors = require('cors')
 const con = require('./config/connection')
-const fs = require('fs')
+// const fs = require('fs')
 const response = require('./response')
 const bcrypt = require('bcrypt')
 const app = express()
@@ -151,11 +151,11 @@ app.listen(port, () => {
 })
 
 const getAllData = (category, param = "") => {
-  const data = fs.readFileSync("./lib/data.js", "utf-8", (err, data) => data)
+  // const data = fs.readFileSync("./lib/data.js", "utf-8", (err, data) => data)
 
-  const jsonData = JSON.parse(data)
-  if (param) {
-    return jsonData[0][param]
-  }
-  return jsonData[0].data[category]
+  // const jsonData = JSON.parse(data)
+  // if (param) {
+  //   return jsonData[0][param]
+  // }
+  // return jsonData[0].data[category]
 }
