@@ -1,6 +1,7 @@
+require("dotenv").config()
 const mysql = require("mysql")
 
-const urlDB = `mysql://root:HzwwQzvnzNaWHSeHcLjrnRsuiNSXnSQL@roundhouse.proxy.rlwy.net:44797/railway`
+const urlDB = `mysql://${process.env.MYSQLUSER}:${process.env.MYSQLPASS}@${process.env.MYSQLHOST}:${process.env.MYSQLPORT}/${process.env.MYSQLDB}`
 const con = mysql.createConnection(urlDB)
 // const con = mysql.createConnection({
 //   host: "localhost",
