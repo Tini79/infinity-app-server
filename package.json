@@ -5,7 +5,8 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "nodemon index.js"
+    "dev": "nodemon index.js",
+    "build": "esbuild api/index.js --bundle --platform=node --outfile=server-out.js"
   },
   "keywords": [],
   "author": "Tini NK",
@@ -18,5 +19,8 @@
     "jsonwebtoken": "^9.0.2",
     "mysql": "^2.18.1",
     "nodemon": "^3.1.0"
+  },
+  "devDependencies": {
+    "esbuild": "^0.20.2"
   }
 }
