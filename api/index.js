@@ -8,7 +8,7 @@ const app = express()
 const { generateAccessToken } = require('../services/auth')
 const { body } = require('express-validator')
 const { validationResult } = require('express-validator')
-const port = 3200
+const port = process.env.PORT || 3001;
 
 const corsOptions = {
   origin: 'http://localhost:3000',
@@ -145,7 +145,7 @@ app.post('/api/v1/login', loginValidator, (req, res) => {
   })
 })
 
-app.listen(port, () => {
+app.listen(port, "0.0.0.0", () => {
   console.log(`Server is running in port ${port}`);
 })
 
