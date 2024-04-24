@@ -1,6 +1,6 @@
 const express = require('express')
 const cors = require('cors')
-const con = require('../config/connection')
+// const con = require('../config/connection')
 const fs = require('fs')
 const response = require('../services/response')
 const bcrypt = require('bcrypt')
@@ -9,6 +9,7 @@ const { generateAccessToken } = require('../services/auth')
 const { body } = require('express-validator')
 const { validationResult } = require('express-validator')
 const port = 3200
+const { sql } = require('@vercel/postgres')
 
 const corsOptions = {
   origin: 'http://localhost:3000',
@@ -95,30 +96,30 @@ app.post('/api/v1/registration', registerValidator, (req, res) => {
   const plainPassword = req.body.data.password
   const saltRounds = 11
 
-  const sql1 = `SELECT * FROM users WHERE email = ? OR username = ?`
-  con.query(sql1, [email, username], (err, fields) => {
-    if (err) throw err
-    if (fields.length > 0) {
-      return response(400, "", "Data already exist!", res)
-    }
+  // const sql1 = `SELECT * FROM users WHERE email = ? OR username = ?`
+  // con.query(sql1, [email, username], (err, fields) => {
+  //   if (err) throw err
+  //   if (fields.length > 0) {
+  //     return response(400, "", "Data already exist!", res)
+  //   }
 
-    bcrypt.genSalt(saltRounds, (err, salt) => {
-      if (err) throw err
-      bcrypt.hash(plainPassword, salt, (err, hashed) => {
-        const sql2 = `INSERT INTO users (full_name, username, gender, country_code, email, password) VALUES (?, ?, ?, ?, ?, ?)`
-        con.query(sql2, [fullName, username, gender, country, email, hashed], (err, fields) => {
-          // TODO: nanti coba pelajari ini lebih dalam yak tentang try catch atau middlewarenya; obrolannya ad di chat gpt
-          if (err) {
-            // TODO: bahaya banget pakai ini throw cuk, sekali kena sistem bakalan berhenti terus
-            throw err
-            // response(400, "", "Database error!", res)
-            // return
-          }
-          if (fields.affectedRows) response(200, `Inserted Id ${fields.insertId}`, "Successfully registered new user", res)
-        })
-      })
-    })
-  })
+  //   bcrypt.genSalt(saltRounds, (err, salt) => {
+  //     if (err) throw err
+  //     bcrypt.hash(plainPassword, salt, (err, hashed) => {
+  //       const sql2 = `INSERT INTO users (full_name, username, gender, country_code, email, password) VALUES (?, ?, ?, ?, ?, ?)`
+  //       con.query(sql2, [fullName, username, gender, country, email, hashed], (err, fields) => {
+  //         // TODO: nanti coba pelajari ini lebih dalam yak tentang try catch atau middlewarenya; obrolannya ad di chat gpt
+  //         if (err) {
+  //           // TODO: bahaya banget pakai ini throw cuk, sekali kena sistem bakalan berhenti terus
+  //           throw err
+  //           // response(400, "", "Database error!", res)
+  //           // return
+  //         }
+  //         if (fields.affectedRows) response(200, `Inserted Id ${fields.insertId}`, "Successfully registered new user", res)
+  //       })
+  //     })
+  //   })
+  // })
 })
 
 app.post('/api/v1/login', loginValidator, (req, res) => {
@@ -130,19 +131,19 @@ app.post('/api/v1/login', loginValidator, (req, res) => {
   const username = req.body.data.username
   // TODO: belum isi response jika datanya nggak ada gimana
   const sql = `SELECT password FROM users WHERE username = ?`
-  con.query(sql, [username], (err, fields) => {
-    if (err) throw err
-    bcrypt.compare(req.body.data.password, fields[0].password, (err, res2) => {
-      if (err) throw err
+  // con.query(sql, [username], (err, fields) => {
+  //   if (err) throw err
+  //   bcrypt.compare(req.body.data.password, fields[0].password, (err, res2) => {
+  //     if (err) throw err
 
-      if (res2) {
-        const accessToken = generateAccessToken(username)
-        response(200, accessToken, "User is available", res)
-      } else {
-        response(404, "", "User is not found!", res)
-      }
-    })
-  })
+  //     if (res2) {
+  //       const accessToken = generateAccessToken(username)
+  //       response(200, accessToken, "User is available", res)
+  //     } else {
+  //       response(404, "", "User is not found!", res)
+  //     }
+  //   })
+  // })
 })
 
 app.listen(port, () => {
