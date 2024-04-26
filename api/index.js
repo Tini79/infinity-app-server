@@ -61,9 +61,22 @@ app.get('/api/v1/testimonials', (req, res) => {
 })
 
 app.get('/api/v1/category/:slug', (req, res) => {
-  const path = req.path.split("/")[3]
-  const data = getAllData(path, req.params.slug)
-  response(200, data, `Successfully retrieved ${req.params.slug} category data`, res)
+  const sql1 = `SELECT * FROM product_categories WHERE slug = ?`
+  con.query(sql1, [req.params.slug], (err, fields1) => {
+    if (err) {
+      throw err
+    } else {
+      const sql2 = `SELECT * FROM products WHERE category_id = ? GROUP BY code`
+      con.query(sql2, [fields1[0].id], (err, fields2) => {
+        if (err) {
+          throw err
+        } else {
+          response(200, { data: fields1[0], details: fields2 }, `Successfully retrieved ${req.params.slug} category data`, res)
+        }
+      })
+    }
+
+  })
 })
 
 const registerValidator = [
