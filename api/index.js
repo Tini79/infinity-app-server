@@ -117,6 +117,7 @@ app.get('/api/v1/category/:slug', (req, res) => {
   })
 })
 
+// AUTHENTICATION
 const registerValidator = [
   body('data.full_name').trim().notEmpty(),
   body('data.username').trim().notEmpty(),
