@@ -42,40 +42,78 @@ app.get('/api/v1/', (req, res) => {
 
 // TODO: sempat mau coba autheticate token, tapi belum kelar itu yak, nanti mungkin pas maintenance aja tambahin atau kalo sempet sebelum launch
 app.get('/api/v1/categories', (req, res) => {
-  const path = req.path.split("/")[3]
-  const data = getAllData(path)
-  response(200, data, "Successfully retrieved category data", res)
+  const sql = 'SELECT * FROM categories'
+  con.query(sql, (err, fields) => {
+    if (err) {
+      response(400, null, err.message, res)
+      throw err
+    } else {
+      response(200, fields, "Successfully retrieved category data!", res)
+    }
+  })
 })
 
-// TODO: berhubung data yg diambil belum dari db, mungkin nanti bisa dikondisikan ya, yg benar" popular dan data terbaru (untuk new arrivals)
 app.get('/api/v1/popular-categories', (req, res) => {
-  const path = req.path.split("/")[3]
-  const data = getAllData(path)
-  response(200, data, "Successfully retrieved popular category data", res)
+  const sql = 'SELECT categories.id,' +
+    ' categories.name,' +
+    ' categories.slug,' +
+    ' categories.href,' +
+    ' categories.path,' +
+    ' SUM(testimonials.rate) AS total_rate' +
+    ' FROM categories' +
+    ' LEFT JOIN testimonials' +
+    ' ON categories.id = testimonials.product_category_id' +
+    ' GROUP BY categories.id'
+  con.query(sql, (err, fields) => {
+    if (err) {
+      response(400, null, err.message, res)
+      throw err
+    } else {
+      response(200, fields, "Successfully retrieved popular category data!", res)
+    }
+  })
 })
 
 app.get('/api/v1/testimonials', (req, res) => {
-  const path = req.path.split("/")[3]
-  const data = getAllData(path)
-  response(200, data, "Successfully retrieved testimonial data", res)
+  const sql = 'SELECT testimonials.id,' +
+    ' testimonials.customer_name,' +
+    ' testimonials.testimonial,' +
+    ' testimonials.rate,' +
+    ' categories.name,' +
+    ' categories.slug,' +
+    ' categories.path,' +
+    ' categories.href' +
+    ' FROM testimonials' +
+    ' LEFT JOIN categories' +
+    ' ON testimonials.product_category_id = categories.id' +
+    ' ORDER BY date ASC; '
+  con.query(sql, ((err, fields) => {
+    if (err) {
+      response(400, null, err.message, res)
+      throw err
+    } else {
+      response(200, fields, "Successfully retrieved testimonial data!", res)
+    }
+  }))
 })
 
 app.get('/api/v1/category/:slug', (req, res) => {
-  const sql1 = `SELECT * FROM product_categories WHERE slug = ?`
+  const sql1 = `SELECT * FROM categories WHERE slug = ?`
   con.query(sql1, [req.params.slug], (err, fields1) => {
     if (err) {
+      response(400, null, err.message, res)
       throw err
     } else {
-      const sql2 = `SELECT * FROM products WHERE category_id = ? GROUP BY code`
+      const sql2 = `SELECT * FROM products WHERE category_id = ? ORDER BY code ASC`
       con.query(sql2, [fields1[0].id], (err, fields2) => {
         if (err) {
+          response(400, null, err.message, res)
           throw err
         } else {
-          response(200, { data: fields1[0], details: fields2 }, `Successfully retrieved ${req.params.slug} category data`, res)
+          response(200, { data: fields1[0], details: fields2 }, `Successfully retrieved ${req.params.slug} category data!`, res)
         }
       })
     }
-
   })
 })
 
@@ -94,9 +132,9 @@ const loginValidator = [
 ]
 
 app.post('/api/v1/registration', registerValidator, (req, res) => {
-  const errors = validationResult(req)
-  if (errors.errors.length > 0) {
-    return response(400, "", "Invalid data format", res)
+  const err = validationResult(req)
+  if (err.errors.length > 0) {
+    return response(400, "", err.errors, res)
   }
 
   // initialize data
@@ -110,24 +148,29 @@ app.post('/api/v1/registration', registerValidator, (req, res) => {
 
   const sql1 = `SELECT * FROM users WHERE email = ? OR username = ?`
   con.query(sql1, [email, username], (err, fields) => {
-    if (err) throw err
+    if (err) {
+      response(400, null, err.message, res)
+      throw err
+    }
     if (fields.length > 0) {
-      return response(400, "", "Data already exist!", res)
+      return response(400, "", "User already exist!", res)
     }
 
     bcrypt.genSalt(saltRounds, (err, salt) => {
-      if (err) throw err
+      if (err) {
+        response(400, null, err.message, res)
+        throw err
+      }
       bcrypt.hash(plainPassword, salt, (err, hashed) => {
         const sql2 = `INSERT INTO users (full_name, username, gender, country_code, email, password) VALUES (?, ?, ?, ?, ?, ?)`
         con.query(sql2, [fullName, username, gender, country, email, hashed], (err, fields) => {
           // TODO: nanti coba pelajari ini lebih dalam yak tentang try catch atau middlewarenya; obrolannya ad di chat gpt
           if (err) {
             // TODO: bahaya banget pakai ini throw cuk, sekali kena sistem bakalan berhenti terus
+            response(400, null, err.message, res)
             throw err
-            // response(400, "", "Database error!", res)
-            // return
           }
-          if (fields.affectedRows) response(200, `Inserted Id ${fields.insertId}`, "Successfully registered new user", res)
+          if (fields.affectedRows) response(200, `Inserted Id ${fields.insertId}`, "Successfully register new user!", res)
         })
       })
     })
@@ -135,22 +178,29 @@ app.post('/api/v1/registration', registerValidator, (req, res) => {
 })
 
 app.post('/api/v1/login', loginValidator, (req, res) => {
-  const errors = validationResult(req)
-  if (errors.errors.length > 0) {
-    return response(400, "", "Invalid data format", res)
+  const err = validationResult(req)
+  if (err.errors.length > 0) {
+    return response(400, "", err.errors, res)
   }
 
   const username = req.body.data.username
   // TODO: belum isi response jika datanya nggak ada gimana
   const sql = `SELECT password FROM users WHERE username = ?`
   con.query(sql, [username], (err, fields) => {
-    if (err) throw err
+    if (err) {
+      response(400, null, err.message, res)
+      throw err
+    }
+
     bcrypt.compare(req.body.data.password, fields[0].password, (err, res2) => {
-      if (err) throw err
+      if (err) {
+        response(400, null, err.message, res)
+        throw err
+      }
 
       if (res2) {
         const accessToken = generateAccessToken(username)
-        response(200, accessToken, "User is available", res)
+        response(200, { username: username, token: accessToken }, "User is available!", res)
       } else {
         response(404, "", "User is not found!", res)
       }
@@ -161,15 +211,5 @@ app.post('/api/v1/login', loginValidator, (req, res) => {
 app.listen(port, "0.0.0.0", () => {
   console.log(`Server is running in port ${port}`);
 })
-
-const getAllData = (category, param = "") => {
-  const data = fs.readFileSync("./lib/data.js", "utf-8", (err, data) => data)
-
-  const jsonData = JSON.parse(data)
-  if (param) {
-    return jsonData[0][param]
-  }
-  return jsonData[0].data[category]
-}
 
 module.exports = app
