@@ -59,7 +59,7 @@ app.post('/api/v1/registration', registerValidator, (req, res) => {
   con.query(sql, [email, username], (err, fields) => {
     if (err) {
       response(400, null, err.message, res)
-      throw err
+      // throw err
     }
     if (fields.length > 0) {
       return response(400, "", "User already exist!", res)
@@ -68,7 +68,7 @@ app.post('/api/v1/registration', registerValidator, (req, res) => {
     bcrypt.genSalt(saltRounds, (err, salt) => {
       if (err) {
         response(400, null, err.message, res)
-        throw err
+        // throw err
       }
       bcrypt.hash(plainPassword, salt, (err, hashed) => {
         const sql = `INSERT INTO users (full_name, username, gender, country_code, email, password) VALUES (?, ?, ?, ?, ?, ?)`
@@ -77,7 +77,7 @@ app.post('/api/v1/registration', registerValidator, (req, res) => {
           if (err) {
             // TODO: bahaya banget pakai ini throw cuk, sekali kena sistem bakalan berhenti terus
             response(400, null, err.message, res)
-            throw err
+            // throw err
           }
           if (fields.affectedRows) response(200, `Inserted Id ${fields.insertId}`, "Successfully register new user!", res)
         })
@@ -93,19 +93,18 @@ app.post('/api/v1/login', loginValidator, (req, res) => {
   }
 
   const username = req.body.data.username
-  // TODO: belum isi response jika datanya nggak ada gimana
   const sql = `SELECT password FROM users WHERE username = ?`
   con.query(sql, [username], (err, fields) => {
     if (err) {
       response(400, null, err.message, res)
-      throw err
+      // throw err
     }
 
     if (fields.length > 0) {
       bcrypt.compare(req.body.data.password, fields[0].password, (err, res2) => {
         if (err) {
           response(400, null, err.message, res)
-          throw err
+          // throw err
         }
 
         if (res2) {
@@ -119,10 +118,6 @@ app.post('/api/v1/login', loginValidator, (req, res) => {
       response(404, "", "User is not found!", res)
     }
   })
-})
-
-app.get('/api/v1/logout', (req, res) => {
-
 })
 
 // GENERAL API
@@ -147,7 +142,31 @@ app.get('/api/v1/categories', (req, res) => {
   con.query(sql, (err, fields) => {
     if (err) {
       response(400, null, err.message, res)
-      throw err
+      // throw err
+    } else {
+      response(200, fields, "Successfully retrieved category data!", res)
+    }
+  })
+})
+
+app.get('/api/v1/slugs', (req, res) => {
+  const sql = 'SELECT slug, created_at FROM categories'
+  con.query(sql, (err, fields) => {
+    if (err) {
+      response(400, null, err.message, res)
+      // throw err
+    } else {
+      response(200, fields, "Successfully retrieved category data!", res)
+    }
+  })
+})
+
+app.get('/api/v1/slug/:slug', (req, res) => {
+  const sql = 'SELECT slug, name, path, desc1 FROM categories WHERE slug = ?'
+  con.query(sql, [req.params.slug], (err, fields) => {
+    if (err) {
+      response(400, null, err.message, res)
+      // throw err
     } else {
       response(200, fields, "Successfully retrieved category data!", res)
     }
@@ -169,7 +188,7 @@ app.get('/api/v1/popular-categories', (req, res) => {
   con.query(sql, (err, fields) => {
     if (err) {
       response(400, null, err.message, res)
-      throw err
+      // throw err
     } else {
       response(200, fields, "Successfully retrieved popular category data!", res)
     }
@@ -192,7 +211,7 @@ app.get('/api/v1/testimonials', (req, res) => {
   con.query(sql, ((err, fields) => {
     if (err) {
       response(400, null, err.message, res)
-      throw err
+      // throw err
     } else {
       response(200, fields, "Successfully retrieved testimonial data!", res)
     }
@@ -204,7 +223,7 @@ app.get('/api/v1/category/:slug', (req, res) => {
   con.query(sql, [req.params.slug], (err, fields1) => {
     if (err) {
       response(400, null, err.message, res)
-      throw err
+      // throw err
     } else {
       const sql = 'SELECT products.id,' +
         ' products.code,' +
@@ -223,7 +242,7 @@ app.get('/api/v1/category/:slug', (req, res) => {
       con.query(sql, [fields1[0].id], (err, fields2) => {
         if (err) {
           response(400, null, err.message, res)
-          throw err
+          // throw err
         } else {
           getMaterialsByCategory(res, fields1[0].id, (results) => {
             const materials = results
@@ -240,7 +259,7 @@ const getMaterialsByCategory = (res, categoryId, callback) => {
   con.query(sql, [categoryId], (err, fields) => {
     if (err) {
       response(400, null, err.message, res)
-      throw err
+      // throw err
     } else {
       callback(fields)
     }
