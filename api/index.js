@@ -229,7 +229,6 @@ app.get('/api/v1/category/:slug', (req, res) => {
         ' products.code,' +
         ' products.name,' +
         ' products.path,' +
-        ' products.href,' +
         ' products.price,' +
         ' products.price,' +
         ' products.desc,' +
