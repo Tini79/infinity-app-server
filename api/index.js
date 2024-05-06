@@ -230,7 +230,7 @@ app.get('/api/v1/category/:slug', (req, res) => {
         ' products.path,' +
         ' products.price,' +
         ' products.price,' +
-        ' products.desc,' +
+        ' products.description,' +
         ' SUM(testimonials.rate) AS total_rate' +
         ' FROM products LEFT JOIN testimonials' +
         ' ON products.id = testimonials.product_id ' +
