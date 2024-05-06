@@ -224,30 +224,34 @@ app.get('/api/v1/category/:slug', (req, res) => {
       response(400, null, err.message, res)
       // throw err
     } else {
-      const sql = 'SELECT products.id,' +
-        ' products.code,' +
-        ' products.name,' +
-        ' products.path,' +
-        ' products.price,' +
-        ' products.price,' +
-        ' products.description,' +
-        ' SUM(testimonials.rate) AS total_rate' +
-        ' FROM products LEFT JOIN testimonials' +
-        ' ON products.id = testimonials.product_id ' +
-        ' WHERE category_id = ? ' +
-        ' GROUP BY products.id' +
-        ' ORDER BY code ASC'
-      con.query(sql, [fields1[0].id], (err, fields2) => {
-        if (err) {
-          response(400, null, err.message, res)
-          // throw err
-        } else {
-          getMaterialsByCategory(res, fields1[0].id, (results) => {
-            const materials = results
-            response(200, { data: fields1[0], details: fields2, materials: materials }, `Successfully retrieved ${req.params.slug} category data!`, res)
-          })
-        }
-      })
+      if (fields1.length > 0) {
+        const sql = 'SELECT products.id,' +
+          ' products.code,' +
+          ' products.name,' +
+          ' products.path,' +
+          ' products.price,' +
+          ' products.price,' +
+          ' products.description,' +
+          ' SUM(testimonials.rate) AS total_rate' +
+          ' FROM products LEFT JOIN testimonials' +
+          ' ON products.id = testimonials.product_id ' +
+          ' WHERE category_id = ? ' +
+          ' GROUP BY products.id' +
+          ' ORDER BY code ASC'
+        con.query(sql, [fields1[0].id], (err, fields2) => {
+          if (err) {
+            response(400, null, err.message, res)
+            // throw err
+          } else {
+            getMaterialsByCategory(res, fields1[0].id, (results) => {
+              const materials = results
+              response(200, { data: fields1[0], details: fields2, materials: materials }, `Successfully retrieved ${req.params.slug} category data!`, res)
+            })
+          }
+        })
+      } else {
+        response(404, null, 'Category is not found!', res)
+      }
     }
   })
 })
