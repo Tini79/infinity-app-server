@@ -11,14 +11,13 @@ const { validationResult } = require('express-validator')
 const port = process.env.PORT || 3001;
 
 const corsOptions = {
-  origin: 'http://localhost:3000',
+  origin: ['http://localhost:8080', 'infinity-app-client-ochre.vercel.app'],
   methods: ['GET', 'POST'],
   allowHeaders: ['Content-Type'],
   optionsSuccessStatus: 200
 }
 
-// app.use(cors(corsOptions))
-app.use(cors())
+app.use(cors(corsOptions))
 app.use(express.json())
 
 app.get('/api/v1/', (req, res) => {
