@@ -239,7 +239,6 @@ app.get('/api/v1/category/:slug', (req, res) => {
           ' GROUP BY products.id' +
           ' ORDER BY code ASC'
         con.query(sql, [fields1[0].id], (err, fields2) => {
-          console.log(fields2, "fillll");
           if (err) {
             response(400, null, err.message, res)
             // throw err
