@@ -197,11 +197,11 @@ app.get('/api/v1/popular-categories', (req, res) => {
 app.get('/api/v1/testimonials', (req, res) => {
   const sql = 'SELECT testimonials.id,' +
     ' testimonials.customer_name,' +
+    ' testimonials.path,' +
     ' testimonials.testimonial,' +
     ' testimonials.rate,' +
     ' categories.name,' +
     ' categories.slug,' +
-    ' categories.path,' +
     ' categories.href' +
     ' FROM testimonials' +
     ' LEFT JOIN categories' +
