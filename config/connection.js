@@ -11,7 +11,10 @@ const con = mysql2.createConnection(urlDB)
 // })
 
 con.connect((err) => {
-  if (err) throw err
+  if (err) {
+    console.log("Error on connecting database",err);
+    throw err
+  }
   console.log("Connected!");
 })
 
