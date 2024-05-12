@@ -13,8 +13,10 @@ const port = process.env.PORT || 3001;
 const corsOptions = {
   origin: ['http://localhost:8080', 'infinity-app-client-ochre.vercel.app'],
   methods: ['GET', 'POST'],
-  allowHeaders: ['Content-Type'],
-  optionsSuccessStatus: 200
+  allowHeaders: ['Content-Type'], // , 'application/javascript; charset=UTF-8'
+  // additional by me on 5/12/24
+  connection: "keep-alive"
+  // optionsSuccessStatus: 200
 }
 
 app.use(cors(corsOptions))
@@ -100,9 +102,11 @@ app.post('/api/v1/login', loginValidator, (req, res) => {
     }
 
     if (fields.length > 0) {
+      console.log(req.body, 'bbb');
       bcrypt.compare(req.body.data.password, fields[0].password, (err, res2) => {
         if (err) {
           response(400, null, err.message, res)
+          return
           // throw err
         }
 
@@ -110,7 +114,8 @@ app.post('/api/v1/login', loginValidator, (req, res) => {
           const accessToken = generateAccessToken(username)
           response(200, { username: username, token: accessToken }, "User is available!", res)
         } else {
-          response(404, "", "User is not found!", res)
+          console.log('resss');
+          response(400, "", "User is not found!", res)
         }
       })
     } else {
@@ -173,16 +178,17 @@ app.get('/api/v1/slug/:slug', (req, res) => {
 })
 
 app.get('/api/v1/popular-categories', (req, res) => {
-  const sql = 'SELECT categories.id,' +
-    ' categories.name,' +
-    ' categories.slug,' +
-    ' categories.href,' +
-    ' categories.path,' +
-    ' SUM(testimonials.rate) AS total_rate' +
-    ' FROM categories' +
-    ' LEFT JOIN testimonials' +
-    ' ON categories.id = testimonials.product_category_id' +
-    ' GROUP BY categories.id' +
+  const sql = 'SELECT c.id,' +
+    ' c.name,' +
+    ' c.slug,' +
+    ' c.href,' +
+    ' c.path,' +
+    ' SUM(t.rate) AS total_rate,' +
+    ' p.path AS pop_path' +
+    ' FROM categories c' +
+    ' LEFT JOIN testimonials t ON c.id = t.product_category_id' +
+    ' LEFT JOIN pop_categories p ON c.id = p.category_id' +
+    ' GROUP BY c.id' +
     ' ORDER BY total_rate DESC'
   con.query(sql, (err, fields) => {
     if (err) {
