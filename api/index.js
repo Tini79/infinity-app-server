@@ -185,7 +185,7 @@ app.get('/api/v1/popular-categories', (req, res) => {
     ' LEFT JOIN testimonials t ON c.id = t.product_category_id' +
     ' LEFT JOIN pop_categories p ON c.id = p.category_id' +
     ' GROUP BY c.id' +
-    ' ORDER BY total_rate, pop_path DESC'
+    ' ORDER BY total_rate, p.path DESC'
   con.query(sql, (err, fields) => {
     if (err) {
       response(400, null, err.message, res)
