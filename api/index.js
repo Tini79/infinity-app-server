@@ -59,7 +59,7 @@ app.post('/api/v1/registration', registerValidator, (req, res) => {
   const sql = `SELECT * FROM users WHERE email = ? OR username = ?`
   con.query(sql, [email, username], (err, fields) => {
     if (err) {
-      response(400, null, err.message, res)
+      return response(400, null, err.message, res)
       // throw err
     }
     if (fields.length > 0) {
@@ -68,7 +68,7 @@ app.post('/api/v1/registration', registerValidator, (req, res) => {
 
     bcrypt.genSalt(saltRounds, (err, salt) => {
       if (err) {
-        response(400, null, err.message, res)
+        return response(400, null, err.message, res)
         // throw err
       }
       bcrypt.hash(plainPassword, salt, (err, hashed) => {
@@ -76,8 +76,7 @@ app.post('/api/v1/registration', registerValidator, (req, res) => {
         con.query(sql, [fullName, username, gender, country, email, hashed], (err, fields) => {
           // TODO: nanti coba pelajari ini lebih dalam yak tentang try catch atau middlewarenya; obrolannya ad di chat gpt
           if (err) {
-            // TODO: bahaya banget pakai ini throw cuk, sekali kena sistem bakalan berhenti terus
-            response(400, null, err.message, res)
+            return response(400, null, err.message, res)
             // throw err
           }
           if (fields.affectedRows) response(200, `Inserted Id ${fields.insertId}`, "Successfully register new user!", res)
@@ -102,11 +101,9 @@ app.post('/api/v1/login', loginValidator, (req, res) => {
     }
 
     if (fields.length > 0) {
-      console.log(req.body, 'bbb');
       bcrypt.compare(req.body.data.password, fields[0].password, (err, res2) => {
         if (err) {
-          response(400, null, err.message, res)
-          return
+          return response(400, null, err.message, res)
           // throw err
         }
 
@@ -114,12 +111,11 @@ app.post('/api/v1/login', loginValidator, (req, res) => {
           const accessToken = generateAccessToken(username)
           response(200, { username: username, token: accessToken }, "User is available!", res)
         } else {
-          console.log('resss');
-          response(400, "", "User is not found!", res)
+          response(400, null, "User is not found!", res)
         }
       })
     } else {
-      response(404, "", "User is not found!", res)
+      response(400, null, "User is not found!", res)
     }
   })
 })
