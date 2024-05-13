@@ -174,31 +174,18 @@ app.get('/api/v1/slug/:slug', (req, res) => {
 })
 
 app.get('/api/v1/popular-categories', (req, res) => {
-  // const sql = 'SELECT c.id,' +
-  //   ' c.name,' +
-  //   ' c.slug,' +
-  //   ' c.href,' +
-  //   ' c.path,' +
-  //   ' SUM(t.rate) AS total_rate,' +
-  //   ' p.path AS pop_path' +
-  //   ' FROM categories c' +
-  //   ' LEFT JOIN testimonials t ON c.id = t.product_category_id' +
-  //   ' LEFT JOIN pop_categories p ON c.id = p.category_id' +
-  //   ' GROUP BY c.id' +
-  //   ' ORDER BY total_rate DESC'
-  // con.query(sql, (err, fields) => {
-    const sql = 'SELECT categories.id,' +
-    ' categories.name,' +
-    ' categories.slug,' +
-    ' categories.href,' +
-    ' categories.path,' +
-    ' SUM(testimonials.rate) AS total_rate,' +
-    ' pop_categories.path AS pop_path' +
-    ' FROM categories' +
-    ' LEFT JOIN testimonials ON categories.id = testimonials.product_category_id' +
-    ' LEFT JOIN pop_categories ON categories.id = pop_categories.category_id' +
-    ' GROUP BY categories.id' +
-    ' ORDER BY total_rate DESC'
+  const sql = 'SELECT c.id,' +
+    ' c.name,' +
+    ' c.slug,' +
+    ' c.href,' +
+    ' c.path,' +
+    ' SUM(t.rate) AS total_rate,' +
+    ' p.path AS pop_path' +
+    ' FROM categories c' +
+    ' LEFT JOIN testimonials t ON c.id = t.product_category_id' +
+    ' LEFT JOIN pop_categories p ON c.id = p.category_id' +
+    ' GROUP BY c.id' +
+    ' ORDER BY total_rate, pop_path DESC'
   con.query(sql, (err, fields) => {
     if (err) {
       response(400, null, err.message, res)
