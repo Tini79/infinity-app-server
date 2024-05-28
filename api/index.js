@@ -9,7 +9,7 @@ const { generateAccessToken } = require('../services/auth')
 const { body } = require('express-validator')
 const { validationResult } = require('express-validator')
 const port = process.env.PORT || 3001;
-
+const verifyToken = require('../services/middleware.js')
 const corsOptions = {
   origin: ['http://localhost:8080', 'infinity-app-client-ochre.vercel.app'],
   methods: ['GET', 'POST'],
@@ -74,7 +74,6 @@ app.post('/api/v1/registration', registerValidator, (req, res) => {
       bcrypt.hash(plainPassword, salt, (err, hashed) => {
         const sql = `INSERT INTO users (full_name, username, gender, country_code, email, password) VALUES (?, ?, ?, ?, ?, ?)`
         con.query(sql, [fullName, username, gender, country, email, hashed], (err, fields) => {
-          // TODO: nanti coba pelajari ini lebih dalam yak tentang try catch atau middlewarenya; obrolannya ad di chat gpt
           if (err) {
             return response(400, null, err.message, res)
             // throw err
@@ -120,6 +119,10 @@ app.post('/api/v1/login', loginValidator, (req, res) => {
   })
 })
 
+// app.get('/api/v1/test', verifyToken, (req, res) => {
+//   response(200, "", "Unauthorized, only necessary access granted!", res)
+// })
+
 // GENERAL API
 app.get('/api/v1/countries', (req, res) => {
   const headers = new Headers()
@@ -136,13 +139,11 @@ app.get('/api/v1/countries', (req, res) => {
     .catch(err => response(400, "", err, res))
 })
 
-// TODO: sempat mau coba autheticate token, tapi belum kelar itu yak, nanti mungkin pas maintenance aja tambahin atau kalo sempet sebelum launch
-app.get('/api/v1/categories', (req, res) => {
+app.get('/api/v1/categories', verifyToken, (req, res) => {
   const sql = 'SELECT * FROM categories'
   con.query(sql, (err, fields) => {
     if (err) {
       response(400, null, err.message, res)
-      // throw err
     } else {
       response(200, fields, "Successfully retrieved category data!", res)
     }
@@ -161,7 +162,7 @@ app.get('/api/v1/slugs', (req, res) => {
   })
 })
 
-app.get('/api/v1/slug/:slug', (req, res) => {
+app.get('/api/v1/slug/:slug', verifyToken,(req, res) => {
   const sql = 'SELECT slug, name, path, desc1 FROM categories WHERE slug = ?'
   con.query(sql, [req.params.slug], (err, fields) => {
     if (err) {
@@ -173,7 +174,7 @@ app.get('/api/v1/slug/:slug', (req, res) => {
   })
 })
 
-app.get('/api/v1/popular-categories', (req, res) => {
+app.get('/api/v1/popular-categories', verifyToken, (req, res) => {
   const sql = 'SELECT c.id,' +
     ' c.name,' +
     ' c.slug,' +
@@ -196,7 +197,7 @@ app.get('/api/v1/popular-categories', (req, res) => {
   })
 })
 
-app.get('/api/v1/testimonials', (req, res) => {
+app.get('/api/v1/testimonials', verifyToken, (req, res) => {
   const sql = 'SELECT testimonials.id,' +
     ' testimonials.customer_name,' +
     ' testimonials.path,' +
@@ -219,7 +220,7 @@ app.get('/api/v1/testimonials', (req, res) => {
   }))
 })
 
-app.get('/api/v1/category/:slug', (req, res) => {
+app.get('/api/v1/category/:slug', verifyToken, (req, res) => {
   const sql = `SELECT * FROM categories WHERE slug = ?`
   con.query(sql, [req.params.slug], (err, fields1) => {
     if (err) {
