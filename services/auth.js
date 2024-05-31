@@ -6,7 +6,7 @@ const generateAccessToken = ((user) => {
     username: user.username,
   }
   const secret = process.env.SECRET_KEY
-  const options = { expiresIn: '60s' }
+  const options = { expiresIn: '7d' }
   return jwt.sign(payload, secret, options)
 })
 
