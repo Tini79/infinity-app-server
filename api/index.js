@@ -1,7 +1,6 @@
 const express = require('express')
 const cors = require('cors')
 const con = require('../config/connection')
-const fs = require('fs')
 const response = require('../services/response')
 const bcrypt = require('bcrypt')
 const app = express()
