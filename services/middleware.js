@@ -5,13 +5,13 @@ const authenticateToken = ((req, res, next) => {
   const authHeader = req.headers['authorization']
   const token = authHeader && authHeader.split(' ')[1]
 
-  if (!token) {
-    console.log("Unauthorized!");
-  } else {
+  if (token) {
     const result = verifyAccessToken(res, token)
     if (result) {
       return response(result.statusCode, "", result.message, res)
     }
+  // } else {
+  //   // console.log("Unauthorized!");
   }
 
   next()
