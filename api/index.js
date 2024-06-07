@@ -177,7 +177,6 @@ app.get('/api/v1/popular-categories', verifyToken, (req, res) => {
   const sql = 'SELECT c.id,' +
     ' c.name,' +
     ' c.slug,' +
-    ' c.href,' +
     ' c.path,' +
     ' SUM(t.rate) AS total_rate,' +
     ' p.path AS pop_path' +
@@ -203,8 +202,7 @@ app.get('/api/v1/testimonials', verifyToken, (req, res) => {
     ' testimonials.testimonial,' +
     ' testimonials.rate,' +
     ' categories.name,' +
-    ' categories.slug,' +
-    ' categories.href' +
+    ' categories.slug' +
     ' FROM testimonials' +
     ' LEFT JOIN categories' +
     ' ON testimonials.product_category_id = categories.id' +
