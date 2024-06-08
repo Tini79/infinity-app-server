@@ -15,7 +15,7 @@ con.connect((err) => {
     console.log("Error on connecting database:",err);con
     throw err
   }
-  console.log("Connected!");
+  console.log("Successfully connected!");
 })
 
 module.exports = con
