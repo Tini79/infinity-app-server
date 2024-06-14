@@ -9,6 +9,8 @@ const { body } = require('express-validator')
 const { validationResult } = require('express-validator')
 const port = process.env.PORT || 3001;
 const verifyToken = require('../services/middleware.js')
+const CC = require('currency-converter-lt')
+const currSymbol = require('currency-symbol')
 const corsOptions = {
   origin: ['http://localhost:8080', 'infinity-app-client-ochre.vercel.app'],
   methods: ['GET', 'POST'],
@@ -35,6 +37,8 @@ const registerValidator = [
   body('data.password').trim().notEmpty()
 ]
 
+// TODO: nanti ganti ke string kosong as initialization
+let UCurrCode = "USD"
 const loginValidator = [
   body('data.username').trim().notEmpty(),
   body('data.password').trim().notEmpty()
@@ -91,7 +95,7 @@ app.post('/api/v1/login', loginValidator, (req, res) => {
   }
 
   const username = req.body.data.username
-  const sql = `SELECT password FROM users WHERE username = ?`
+  const sql = `SELECT password, currency_code FROM users WHERE username = ?`
   con.query(sql, [username], (err, fields) => {
     if (err) {
       response(400, null, err.message, res)
@@ -107,6 +111,7 @@ app.post('/api/v1/login', loginValidator, (req, res) => {
 
         if (res2) {
           const accessToken = generateAccessToken(username)
+          UCurrCode = fields[0].currency_code
           response(200, { username: username, token: accessToken }, "User is available!", res)
         } else {
           response(400, null, "User is not found!", res)
@@ -161,7 +166,7 @@ app.get('/api/v1/slugs', (req, res) => {
   })
 })
 
-app.get('/api/v1/slug/:slug', verifyToken,(req, res) => {
+app.get('/api/v1/slug/:slug', verifyToken, (req, res) => {
   const sql = 'SELECT slug, name, path, desc1 FROM categories WHERE slug = ?'
   con.query(sql, [req.params.slug], (err, fields) => {
     if (err) {
@@ -229,8 +234,8 @@ app.get('/api/v1/category/:slug', verifyToken, (req, res) => {
           ' products.code,' +
           ' products.name,' +
           ' products.path,' +
-          ' products.price,' +
-          ' products.price,' +
+          ' products.original_price,' +
+          // ' products.price,' +
           ' products.description,' +
           ' SUM(testimonials.rate) AS total_rate' +
           ' FROM products LEFT JOIN testimonials' +
@@ -245,7 +250,19 @@ app.get('/api/v1/category/:slug', verifyToken, (req, res) => {
           } else {
             getMaterialsByCategory(res, fields1[0].id, (results) => {
               const materials = results
-              response(200, { data: fields1[0], details: fields2, materials: materials }, `Successfully retrieved ${req.params.slug} category data!`, res)
+              let promises = []
+              for (let field of fields2) {
+                let currConvter = new CC({ from: "IDR", to: UCurrCode, amount: field.original_price, isDecimalComma: true })
+                let promise = currConvter.convert().then((res) => {
+                  field.price = res
+                })
+                field.curr_icon = currSymbol.symbol(UCurrCode)
+                promises.push(promise)
+              }
+
+              Promise.all(promises).then(() => {
+                response(200, { data: fields1[0], details: fields2, materials: materials }, `Successfully retrieved ${req.params.slug} category data!`, res)
+              }).catch(err => response(500, null, err.message, res))
             })
           }
         })
