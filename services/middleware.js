@@ -10,8 +10,6 @@ const authenticateToken = ((req, res, next) => {
     if (result) {
       return response(result.statusCode, "", result.message, res)
     }
-  // } else {
-  //   // console.log("Unauthorized!");
   }
 
   next()

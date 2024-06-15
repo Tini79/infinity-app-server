@@ -33,12 +33,12 @@ const registerValidator = [
   body('data.username').trim().notEmpty(),
   body('data.gender').trim().notEmpty(),
   body('data.country').trim().notEmpty(),
+  body('data.country').trim().notEmpty(),
   body('data.email').trim().notEmpty().isEmail(),
   body('data.password').trim().notEmpty()
 ]
 
 // TODO: nanti ganti ke string kosong as initialization
-let UCurrCode = "USD"
 const loginValidator = [
   body('data.username').trim().notEmpty(),
   body('data.password').trim().notEmpty()
@@ -49,21 +49,14 @@ app.post('/api/v1/registration', registerValidator, (req, res) => {
   if (err.errors.length > 0) {
     return response(400, "", err.errors, res)
   }
-
   // initialize data
-  const fullName = req.body.data.full_name
-  const username = req.body.data.username
-  const gender = req.body.data.gender
-  const country = req.body.data.country
-  const email = req.body.data.email
-  const plainPassword = req.body.data.password
+  const { full_name, username, gender, country, currency, email, password } = req.body.data
   const saltRounds = 11
 
   const sql = `SELECT * FROM users WHERE email = ? OR username = ?`
   con.query(sql, [email, username], (err, fields) => {
     if (err) {
       return response(400, null, err.message, res)
-      // throw err
     }
     if (fields.length > 0) {
       return response(400, "", "User already exist!", res)
@@ -72,14 +65,12 @@ app.post('/api/v1/registration', registerValidator, (req, res) => {
     bcrypt.genSalt(saltRounds, (err, salt) => {
       if (err) {
         return response(400, null, err.message, res)
-        // throw err
       }
-      bcrypt.hash(plainPassword, salt, (err, hashed) => {
-        const sql = `INSERT INTO users (full_name, username, gender, country_code, email, password) VALUES (?, ?, ?, ?, ?, ?)`
-        con.query(sql, [fullName, username, gender, country, email, hashed], (err, fields) => {
+      bcrypt.hash(password, salt, (err, hashed) => {
+        const sql = `INSERT INTO users (full_name, username, gender, country_code, currency_code, email, password) VALUES (?, ?, ?, ?, ?, ?, ?)`
+        con.query(sql, [full_name, username, gender, country, currency, email, hashed], (err, fields) => {
           if (err) {
             return response(400, null, err.message, res)
-            // throw err
           }
           if (fields.affectedRows) response(200, `Inserted Id ${fields.insertId}`, "Successfully register new user!", res)
         })
@@ -99,20 +90,17 @@ app.post('/api/v1/login', loginValidator, (req, res) => {
   con.query(sql, [username], (err, fields) => {
     if (err) {
       response(400, null, err.message, res)
-      // throw err
     }
 
     if (fields.length > 0) {
       bcrypt.compare(req.body.data.password, fields[0].password, (err, res2) => {
         if (err) {
           return response(400, null, err.message, res)
-          // throw err
         }
 
         if (res2) {
           const accessToken = generateAccessToken(username)
-          UCurrCode = fields[0].currency_code
-          response(200, { username: username, token: accessToken }, "User is available!", res)
+          response(200, { username: username, currency_code: fields[0].currency_code, token: accessToken }, "User is available!", res)
         } else {
           response(400, null, "User is not found!", res)
         }
@@ -159,7 +147,6 @@ app.get('/api/v1/slugs', (req, res) => {
   con.query(sql, (err, fields) => {
     if (err) {
       response(400, null, err.message, res)
-      // throw err
     } else {
       response(200, fields, "Successfully retrieved category data!", res)
     }
@@ -171,7 +158,6 @@ app.get('/api/v1/slug/:slug', verifyToken, (req, res) => {
   con.query(sql, [req.params.slug], (err, fields) => {
     if (err) {
       response(400, null, err.message, res)
-      // throw err
     } else {
       response(200, fields, "Successfully retrieved category data!", res)
     }
@@ -193,7 +179,6 @@ app.get('/api/v1/popular-categories', verifyToken, (req, res) => {
   con.query(sql, (err, fields) => {
     if (err) {
       response(400, null, err.message, res)
-      // throw err
     } else {
       response(200, fields, "Successfully retrieved popular category data!", res)
     }
@@ -215,19 +200,17 @@ app.get('/api/v1/testimonials', verifyToken, (req, res) => {
   con.query(sql, ((err, fields) => {
     if (err) {
       response(400, null, err.message, res)
-      // throw err
     } else {
       response(200, fields, "Successfully retrieved testimonial data!", res)
     }
   }))
 })
 
-app.get('/api/v1/category/:slug', verifyToken, (req, res) => {
+app.get('/api/v1/category', verifyToken, (req, res) => {
   const sql = `SELECT * FROM categories WHERE slug = ?`
-  con.query(sql, [req.params.slug], (err, fields1) => {
+  con.query(sql, [req.query.slug], (err, fields1) => {
     if (err) {
       response(400, null, err.message, res)
-      // throw err
     } else {
       if (fields1.length > 0) {
         const sql = 'SELECT products.id,' +
@@ -235,7 +218,6 @@ app.get('/api/v1/category/:slug', verifyToken, (req, res) => {
           ' products.name,' +
           ' products.path,' +
           ' products.original_price,' +
-          // ' products.price,' +
           ' products.description,' +
           ' SUM(testimonials.rate) AS total_rate' +
           ' FROM products LEFT JOIN testimonials' +
@@ -246,23 +228,30 @@ app.get('/api/v1/category/:slug', verifyToken, (req, res) => {
         con.query(sql, [fields1[0].id], (err, fields2) => {
           if (err) {
             response(400, null, err.message, res)
-            // throw err
           } else {
             getMaterialsByCategory(res, fields1[0].id, (results) => {
               const materials = results
-              let promises = []
-              for (let field of fields2) {
-                let currConvter = new CC({ from: "IDR", to: UCurrCode, amount: field.original_price, isDecimalComma: true })
-                let promise = currConvter.convert().then((res) => {
-                  field.price = res
-                })
-                field.curr_icon = currSymbol.symbol(UCurrCode)
-                promises.push(promise)
-              }
+              if (req.query.currency_code) {
+                let promises = []
+                for (let field of fields2) {
+                  // TODO: for caching rate, I don't know how to see if it works or not
+                  // TODO: Ada beberapa error ini conversion, mulai dari ikonya yg gak ada atau converternya return NaN
+                  let UCurrCode = req.query.currency_code == "IDR" ? req.query.currency_code : "USD"
+                  let currConvter = new CC({ from: "IDR", to: UCurrCode, amount: field.original_price, isDecimalComma: true })
+                  // currConvter.setupRatesCache({ isRatesCaching: true, ratesCacheDuration: 3600 })
+                  let promise = currConvter.convert().then((res) => {
+                    field.price = res
+                  })
+                  field.curr_icon = currSymbol.symbol(UCurrCode)
+                  promises.push(promise)
+                }
 
-              Promise.all(promises).then(() => {
+                Promise.all(promises).then(() => {
+                  response(200, { data: fields1[0], details: fields2, materials: materials }, `Successfully retrieved ${req.params.slug} category data!`, res)
+                }).catch(err => response(500, null, err.message, res))
+              } else {
                 response(200, { data: fields1[0], details: fields2, materials: materials }, `Successfully retrieved ${req.params.slug} category data!`, res)
-              }).catch(err => response(500, null, err.message, res))
+              }
             })
           }
         })
@@ -278,7 +267,6 @@ const getMaterialsByCategory = (res, categoryId, callback) => {
   con.query(sql, [categoryId], (err, fields) => {
     if (err) {
       response(400, null, err.message, res)
-      // throw err
     } else {
       callback(fields)
     }

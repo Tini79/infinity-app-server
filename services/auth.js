@@ -1,4 +1,3 @@
-const response = require('./response')
 const jwt = require('jsonwebtoken')
 
 const generateAccessToken = ((user) => {
@@ -13,16 +12,14 @@ const generateAccessToken = ((user) => {
 const verifyAccessToken = ((res, token) => {
   const secret = process.env.SECRET_KEY
   try {
-    const decoded = jwt.verify(token, secret)
-    console.log("Access granted:", decoded);
-    // response(200, decoded, "Access granted!", res)
+    jwt.verify(token, secret)
+    // console.log("Access granted:", decoded);
   } catch (error) {
     return err = {
       statusCode: 401,
       name: 'TokenExpiredError',
       message: 'jwt expired',
     }
-    // response(401, "", error.message, res)
   }
 })
 
