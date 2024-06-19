@@ -234,7 +234,7 @@ app.get('/api/v1/category', verifyToken, (req, res) => {
               if (req.query.currency_code) {
                 let promises = []
                 for (let field of fields2) {
-                  let UCurrCode = "INR"
+                  let UCurrCode = req.query.currency_code
                   field.curr_icon = currSymbol.symbol(UCurrCode)
 
                   if (!field.curr_icon) {
@@ -243,21 +243,16 @@ app.get('/api/v1/category', verifyToken, (req, res) => {
                   }
 
                   let currConvter = new CC({ from: "IDR", to: UCurrCode, amount: field.original_price, isDecimalComma: true })
-                  currConvter.setupRatesCache({ isRatesCaching: true, ratesCacheDuration: 3600 }) // TODO: for caching rate, I don't know how to see if it works or not
-                  
                   let promise = currConvter.convert().then((res) => {
                     if (isNaN(res)) {
                       let currConvter2 = new CC({ from: UCurrCode, to: "IDR", amount: 1, isDecimalComma: true })
-                      currConvter2.convert().then((res2) => {
-                        return field.original_price / res2
-                      }).then((val) => {
-                        field.price = val
+                      return currConvter2.convert().then((res2) => {
+                        field.price = field.original_price / res2
                       })
                     } else {
                       field.price = res
                     }
                   })
-                  field.curr_icon = currSymbol.symbol(UCurrCode)
                   promises.push(promise)
                 }
 
