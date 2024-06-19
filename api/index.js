@@ -234,13 +234,28 @@ app.get('/api/v1/category', verifyToken, (req, res) => {
               if (req.query.currency_code) {
                 let promises = []
                 for (let field of fields2) {
-                  // TODO: for caching rate, I don't know how to see if it works or not
-                  // TODO: Ada beberapa error ini conversion, mulai dari ikonya yg gak ada atau converternya return NaN
-                  let UCurrCode = req.query.currency_code == "IDR" ? req.query.currency_code : "USD"
+                  let UCurrCode = "INR"
+                  field.curr_icon = currSymbol.symbol(UCurrCode)
+
+                  if (!field.curr_icon) {
+                    UCurrCode = "USD"
+                    field.curr_icon = currSymbol.symbol(UCurrCode)
+                  }
+
                   let currConvter = new CC({ from: "IDR", to: UCurrCode, amount: field.original_price, isDecimalComma: true })
-                  // currConvter.setupRatesCache({ isRatesCaching: true, ratesCacheDuration: 3600 })
+                  currConvter.setupRatesCache({ isRatesCaching: true, ratesCacheDuration: 3600 }) // TODO: for caching rate, I don't know how to see if it works or not
+                  
                   let promise = currConvter.convert().then((res) => {
-                    field.price = res
+                    if (isNaN(res)) {
+                      let currConvter2 = new CC({ from: UCurrCode, to: "IDR", amount: 1, isDecimalComma: true })
+                      currConvter2.convert().then((res2) => {
+                        return field.original_price / res2
+                      }).then((val) => {
+                        field.price = val
+                      })
+                    } else {
+                      field.price = res
+                    }
                   })
                   field.curr_icon = currSymbol.symbol(UCurrCode)
                   promises.push(promise)
