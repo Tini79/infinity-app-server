@@ -5,7 +5,8 @@ const generateAccessToken = ((user) => {
     username: user.username,
   }
   const secret = process.env.SECRET_KEY
-  const options = { expiresIn: '7d' }
+  // TODO: nanti ubah ke 7 hari, ini buat testing di production
+  const options = { expiresIn: '1d' }
   return jwt.sign(payload, secret, options)
 })
 
